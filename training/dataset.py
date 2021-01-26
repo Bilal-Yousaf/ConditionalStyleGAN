@@ -31,6 +31,36 @@ def parse_tfrecord_np(record):
     data = ex.features.feature['data'].bytes_list.value[0] # temporary pylint workaround # pylint: disable=no-member
     return np.fromstring(data, np.uint8).reshape(shape)
 
+def rotate(x: tf.Tensor) -> tf.Tensor:
+    """Rotation augmentation
+
+    Args:
+        x: Image
+
+    Returns:
+        Augmented image
+    """
+
+    # Rotate 0, 90, 180, 270 degrees
+    return tf.transpose(tf.image.rot90(tf.transpose(x, perm=[1, 2, 0]), tf.random_uniform(shape=[], minval=0, maxval=4, dtype=tf.int32)), perm=[2, 0, 1])
+
+def zoom(x: tf.Tensor, p=0.5, size=(32, 32)) -> tf.Tensor:
+    """Zoom augmentation
+
+    Args:
+        x: Image
+
+    Returns:
+        Augmented image
+    """
+
+    if  tf.random.uniform([]) < p:
+        scale = tf.random_uniform(shape=[], minval=0.5, maxval=1)
+        x = tf.image.random_crop(tf.transpose(x, perm=[1, 2, 0]), size=(int(scale*size[0]),int(scale*size[1]), 3))
+        x = tf.cast(tf.transpose(tf.image.resize_images(x, size=size), perm=[2, 0, 1]), dtype='uint8')
+    
+    return x
+
 #----------------------------------------------------------------------------
 # Dataset class that loads data from tfrecords files.
 
@@ -124,6 +154,8 @@ class TFRecordDataset:
                     continue
                 dset = tf.data.TFRecordDataset(tfr_file, compression_type='', buffer_size=buffer_mb<<20)
                 dset = dset.map(parse_tfrecord_tf, num_parallel_calls=num_threads)
+                dset = dset.map(rotate, num_parallel_calls=num_threads)
+                dset = dset.map(lambda x: zoom(x, 0.5, tfr_shape[1:]), num_parallel_calls=num_threads)
                 dset = tf.data.Dataset.zip((dset, self._tf_labels_dataset))
                 bytes_per_item = np.prod(tfr_shape) * np.dtype(self.dtype).itemsize
                 if shuffle_mb > 0:
