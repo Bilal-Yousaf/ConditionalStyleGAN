@@ -2,7 +2,7 @@ import argparse
 import glob
 import pickle
 
-from os import listdir
+from os import listdir, makedirs
 from os.path import join
 
 def pickle_data(file, data_dict):
@@ -14,7 +14,10 @@ def unpickle(file):
         _dict = pickle.load(fo, encoding='bytes')
     return _dict
 
-def main(dataset_path, out_path='../data/mypickle.pickle'):
+def main(dataset_path, path):
+    makedirs(path, exist_ok=True)
+
+    out_path = join(path, 'mypickle.pickle')   
     classes_names = sorted(listdir(dataset_path))
 
     mypickle = {"Filenames": [], "Labels": []}
@@ -31,9 +34,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset_path", "-d", help="set dataset folder path")
-    parser.add_argument("--output_path", "-o", help="set output path")
+    parser.add_argument("--output_path", "-o", default='../data/', help="set output path")
 
     args = parser.parse_args()
 
     main(args.dataset_path, args.output_path)
-
