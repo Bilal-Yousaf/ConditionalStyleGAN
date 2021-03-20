@@ -18,8 +18,9 @@ cd ConditionalStyleGAN/
 
 ## Prepare Pickle file
 ```
-python create_pickle.py -d <path of the root dataset folder>
-For Example: python create_pickle.py -d '/content/sample_dataset'
+python create_pickle.py -d <path of the root dataset folder> -s 512
+For Example: python create_pickle.py -d '/content/sample_dataset -s 512'
+In -s argument you need to add size on which the script will resize all the images.
 ```
 
 ## Convert Pickle file to TfRecords
